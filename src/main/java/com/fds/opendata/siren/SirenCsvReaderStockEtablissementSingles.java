@@ -15,29 +15,35 @@ public class SirenCsvReaderStockEtablissementSingles {
 	private final File f;
 	private final Charset charset;
 	private final CallbackReadEntry cb;
+	private final ObjectReader oReader ;
 
 	public SirenCsvReaderStockEtablissementSingles(final File f, final Charset charset, final CallbackReadEntry cb) {
 		this.f = f;
 		this.charset = charset;
 		this.cb = cb;
+
+		final CsvMapper csvMapper = new CsvMapper();
+
+		final CsvSchema csvSchema = csvMapper.typedSchemaFor(SirenStockEtablissement.class)
+				// .withHeader()
+				.withColumnSeparator(',').withComments();
+
+		oReader = csvMapper.readerWithTypedSchemaFor(SirenStockEtablissement.class).with(csvSchema);
+	}
+	
+	public ObjectReader getoReader() {
+		return oReader;
 	}
 
 	public void read() throws ReaderException {
-		final CsvMapper csvMapper = new CsvMapper();
-
-		final CsvSchema csvSchema = csvMapper
-                .typedSchemaFor(SirenStockEtablissement.class)
-                .withHeader()
-                .withColumnSeparator(',')
-                .withComments();
-        
-		final ObjectReader oReader = csvMapper.readerWithTypedSchemaFor(SirenStockEtablissement.class).with(csvSchema);
+		// Do the trick
+		// oReader.configure(Feature.AUTO_CLOSE_SOURCE, true);
 
 		new FileLineReader(f, charset, new CallbackReadLineImpl(cb, oReader)).read();
 
 	}
-	
-	private static final class CallbackReadLineImpl implements CallbackReadLine {
+
+	public static final class CallbackReadLineImpl implements CallbackReadLine {
 
 		private final CallbackReadEntry cb;
 		private final ObjectReader oReader;
@@ -58,7 +64,7 @@ public class SirenCsvReaderStockEtablissementSingles {
 				throw new ReaderException(e1);
 			}
 		}
-		
+
 	}
 
 	public static interface CallbackReadEntry {
